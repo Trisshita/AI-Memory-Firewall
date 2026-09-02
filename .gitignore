@@ -1,0 +1,52 @@
+# ─── Python ───────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ─── Virtual Environment ──────────────────────────────────────
+venv/
+.venv/
+env/
+ENV/
+
+# ─── Environment & Secrets ────────────────────────────────────
+.env
+*.env
+!.env.example
+
+# ─── IDE / Editor ─────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ─── Database ─────────────────────────────────────────────────
+*.sqlite3
+*.db
+
+# ─── Logs ─────────────────────────────────────────────────────
+*.log
+logs/
+
+# ─── Coverage ─────────────────────────────────────────────────
+.coverage
+htmlcov/
+coverage.xml
+
+# ─── Alembic ──────────────────────────────────────────────────
+# Keep migrations/ tracked, but ignore generated __pycache__
+migrations/__pycache__/
