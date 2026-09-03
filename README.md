@@ -74,24 +74,6 @@ AI memory Firewall/
    python main.py
    ```
 
-## Development Roadmap
-
-| Milestone | Task | Status |
-|---|---|:---:|
-| **Day 1** | Project Initialization & Scaffolding | ✅ Completed |
-| **Day 2** | PostgreSQL Setup & Connection Architecture | ✅ Completed |
-| **Day 3** | Python Dependencies & Alembic Migration Framework | ✅ Completed |
-| **Day 4–5** | SQLAlchemy 2.0 Models & Database Schema | ✅ Completed |
-| **Day 6–7** | Security Evaluation Engine, REST API & Week 1 Finalization | ✅ Completed |
-
-## Documentation
-
-- [Day 1: Architecture & Design Decisions](docs/day1.md)
-- [Day 2: PostgreSQL Setup & Architecture](docs/day2.md)
-- [Day 3: Dependencies & Migration Framework](docs/day3.md)
-- [Day 4–5: SQLAlchemy Models & Database Schema](docs/day4-5.md)
-- [Day 6–7: Security Evaluation Engine & REST API](docs/day6-7.md)
-
 ## API Endpoints (v1)
 
 | Method | Endpoint | Description |
