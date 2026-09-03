@@ -50,3 +50,5 @@ coverage.xml
 # ─── Alembic ──────────────────────────────────────────────────
 # Keep migrations/ tracked, but ignore generated __pycache__
 migrations/__pycache__/
+
+
