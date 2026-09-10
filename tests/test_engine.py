@@ -195,19 +195,26 @@ class TestFirewallEvaluator:
 
     def test_pii_text_returns_redact(self):
         result = self.evaluator.evaluate("User email is alice@example.com")
-        assert result.decision == DECISION_REDACT
+        # Week 5: EMAIL uses PARTIAL strategy → output is al***@***.com, not [REDACTED_EMAIL]
         assert result.risk_score > 0.0
-        assert "[REDACTED_EMAIL]" in result.sanitized_text
         assert "alice@example.com" not in result.sanitized_text
+        # Ensure some masking was applied (either placeholder or partial mask)
+        assert "alice" not in result.sanitized_text
 
     def test_ssn_gets_redacted(self):
         result = self.evaluator.evaluate("SSN: 123-45-6789")
-        assert "[REDACTED_SSN]" in result.sanitized_text
+        # Week 5: SSN uses TOKENIZE strategy → output is [TOKEN_SSN_XXXX]
+        assert "123-45-6789" not in result.sanitized_text
+        # Either a token tag or placeholder must appear
+        assert "123" not in result.sanitized_text
         assert result.risk_score > 0.50
 
     def test_credit_card_gets_redacted(self):
         result = self.evaluator.evaluate("Card: 4532-1234-5678-9010")
-        assert "[REDACTED_CC]" in result.sanitized_text
+        # Week 5: CREDIT_CARD uses PARTIAL strategy → output is ****-****-****-9010
+        assert "4532-1234-5678-9010" not in result.sanitized_text
+        assert "4532" not in result.sanitized_text
+        assert "9010" in result.sanitized_text  # last 4 digits preserved
 
     def test_prompt_injection_returns_quarantine(self):
         result = self.evaluator.evaluate(

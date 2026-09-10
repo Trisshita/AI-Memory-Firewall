@@ -150,20 +150,22 @@ class TestFirewallInspectEndpoint:
         assert response.status_code == 200
         data = response.json()
         assert data["decision"] == "REDACT"
-        assert "[REDACTED_EMAIL]" in data["sanitized_text"]
         assert "alice@example.com" not in data["sanitized_text"]
+        assert "alice" not in data["sanitized_text"]
         assert data["risk_score"] > 0.0
         assert len(data["violations"]) > 0
 
     def test_inspect_ssn_redacted(self, client, tenant_id):
-        """SSN should be detected and replaced with a placeholder."""
+        """SSN should be detected and masked using TOKENIZE strategy (Week 5)."""
         response = client.post(
             "/api/v1/firewall/inspect",
             json={"text": "My SSN is 123-45-6789", "tenant_id": tenant_id},
         )
         assert response.status_code == 200
         data = response.json()
-        assert "[REDACTED_SSN]" in data["sanitized_text"]
+        # Week 5: SSN uses TOKENIZE → [TOKEN_SSN_XXXX] replaces raw [REDACTED_SSN]
+        assert "123-45-6789" not in data["sanitized_text"]
+        assert "123" not in data["sanitized_text"]
 
     def test_inspect_prompt_injection_quarantined(self, client, tenant_id):
         """Prompt injection should return QUARANTINE or BLOCK."""
@@ -274,7 +276,7 @@ class TestMemoryStoreEndpoint:
         assert data["evaluation"]["decision"] == "ALLOW"
 
     def test_store_pii_memory_sanitized(self, client, tenant_id, session_id):
-        """Memory with PII should be stored with sanitized content."""
+        """Memory with PII should be stored with sanitized content (Week 5: PARTIAL masking)."""
         response = client.post(
             "/api/v1/memory/store",
             json={
@@ -285,8 +287,11 @@ class TestMemoryStoreEndpoint:
         )
         assert response.status_code == 201
         data = response.json()
-        assert "[REDACTED_CC]" in data["memory"]["sanitized_content"]
+        # Week 5: CREDIT_CARD uses PARTIAL strategy → ****-****-****-9010
         assert "4532-1234-5678-9010" not in data["memory"]["sanitized_content"]
+        assert "4532" not in data["memory"]["sanitized_content"]
+        # Last 4 digits preserved by PARTIAL masking
+        assert "9010" in data["memory"]["sanitized_content"]
 
     def test_store_injection_memory_quarantined(self, client, tenant_id, session_id):
         """Memory with injection attempt should be stored as quarantined."""

@@ -27,6 +27,20 @@ class Settings(BaseSettings):
     secret_key: str = Field(default="dev-secret-key-change-in-prod", alias="SECRET_KEY")
     api_version: str = Field(default="0.1.0", alias="API_VERSION")
 
+    # ─── Authentication & Security Settings (Week 2) ─────────────
+    jwt_secret_key: str = Field(
+        default="dev-jwt-secret-key-change-in-prod-at-least-32-chars-long",
+        alias="JWT_SECRET_KEY",
+    )
+    jwt_algorithm: str = Field(default="HS256", alias="JWT_ALGORITHM")
+    access_token_expire_minutes: int = Field(default=60, alias="ACCESS_TOKEN_EXPIRE_MINUTES")
+    refresh_token_expire_days: int = Field(default=7, alias="REFRESH_TOKEN_EXPIRE_DAYS")
+    encryption_key: str = Field(
+        default="k8JvPqVd1Z_U02_3jZf9o3L7gX8s4M1c6Y9b2N5h8K0=",
+        alias="ENCRYPTION_KEY",
+    )
+    openai_api_key: Optional[str] = Field(default=None, alias="OPENAI_API_KEY")
+
     # ─── Server Settings ─────────────────────────────────────────
     api_host: str = Field(default="0.0.0.0", alias="API_HOST")
     api_port: int = Field(default=8000, alias="API_PORT")

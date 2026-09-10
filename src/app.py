@@ -66,9 +66,11 @@ def create_app() -> FastAPI:
                 "host": settings.db_host,
             }
 
-    # ── API v1 Router ──────────────────────────────────────────────────────
-    from src.api.router import api_v1_router  # imported here to avoid circular imports
+    # ── Top-level Auth Router & API v1 Router ──────────────────────────────
+    from src.api.routes.auth import router as auth_router  # imported here to avoid circular imports
+    from src.api.router import api_v1_router
 
+    app.include_router(auth_router, prefix="/auth")
     app.include_router(api_v1_router)
 
     return app

@@ -127,3 +127,49 @@ def test_create_firewall_rule_and_audit(db_session):
     assert audit.id is not None
     assert audit.violation_status == ViolationStatus.MITIGATED
     assert audit.risk_score == 0.85
+
+
+def test_create_user_and_api_key(db_session):
+    """Verify User and APIKey model creation and relationships."""
+    from src.models import APIKey, User, UserRole
+
+    tenant = Tenant(
+        name="SecurityHub",
+        slug=f"sechub-{uuid.uuid4().hex[:8]}",
+        api_key_hash="hash_sec123",
+    )
+    db_session.add(tenant)
+    db_session.commit()
+
+    user = User(
+        email=f"operator-{uuid.uuid4().hex[:6]}@example.com",
+        hashed_password="$2b$12$somehashedpasswordstringforuser",
+        role=UserRole.ADMIN.value,
+        tenant_id=tenant.id,
+        is_active=True,
+    )
+    db_session.add(user)
+    db_session.commit()
+    db_session.refresh(user)
+
+    assert user.id is not None
+    assert user.role == "admin"
+    assert user.tenant.name == "SecurityHub"
+
+    api_key = APIKey(
+        name="Production Agent Key",
+        key_prefix="amf_live_1234",
+        key_hash="some_sha256_hash_value_here",
+        user_id=user.id,
+        tenant_id=tenant.id,
+        is_active=True,
+    )
+    db_session.add(api_key)
+    db_session.commit()
+    db_session.refresh(api_key)
+
+    assert api_key.id is not None
+    assert api_key.user.email == user.email
+    assert api_key.tenant.name == "SecurityHub"
+    assert len(user.api_keys) == 1
+

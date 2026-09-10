@@ -18,6 +18,16 @@ from src.schemas.policy import (
     CreateRuleRequest,
     FirewallRuleResponse,
 )
+from src.schemas.auth import (
+    APIKeyCreatedResponse,
+    APIKeyCreateRequest,
+    APIKeyResponse,
+    TokenRefreshRequest,
+    TokenResponse,
+    UserLoginRequest,
+    UserRegisterRequest,
+    UserResponse,
+)
 
 __all__ = [
     "InspectRequest",
@@ -28,4 +38,12 @@ __all__ = [
     "CreateRuleRequest",
     "FirewallRuleResponse",
     "AuditEventResponse",
+    "UserRegisterRequest",
+    "UserLoginRequest",
+    "TokenRefreshRequest",
+    "TokenResponse",
+    "UserResponse",
+    "APIKeyCreateRequest",
+    "APIKeyCreatedResponse",
+    "APIKeyResponse",
 ]

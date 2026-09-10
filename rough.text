@@ -29,5 +29,97 @@ Day 4-5: SQLAlchemy Models & Database Schema
 - Run the database migration. [DONE]
 - Verify that all tables were successfully created in PostgreSQL. [DONE]
 
-Day 6-7: Review & Finalization
-- Conduct review, testing, and documentation. [IN PROGRESS]
+Day 6-7: Review & Finalization (Week 1)
+- Conduct review, testing, and documentation. [DONE]
+
+Day 8-9: Core Security Module & Cryptography (Week 2)
+- Implement AES-256 (Fernet) field-level encryption and decryption. [DONE]
+- Implement bcrypt password hashing and verification. [DONE]
+- Implement JWT access and refresh token creation and verification. [DONE]
+- Implement deterministic SHA-256 audit log tamper hashing. [DONE]
+- Implement high-entropy API key generation and constant-time verification. [DONE]
+
+Day 10-11: Database Domain Models & Alembic Migrations (Week 2)
+- Create User domain model with UserRole enum and tenant relationships. [DONE]
+- Create APIKey domain model with expiration and user/tenant bindings. [DONE]
+- Create Alembic migration script 002 for users and api_keys tables. [DONE]
+- Create Pydantic v2 validation schemas for authentication and API keys. [DONE]
+
+Day 12-13: Authentication Endpoints & RBAC Middleware (Week 2)
+- Build POST /auth/register endpoint with password hashing. [DONE]
+- Build POST /auth/login endpoint with JWT token issuance. [DONE]
+- Build POST /auth/refresh endpoint for expired token rotation. [DONE]
+- Build GET /auth/me profile endpoint. [DONE]
+- Build API key management endpoints (create, list, revoke). [DONE]
+- Implement FastAPI dependency injection for JWT verification and RBAC (admin/user). [DONE]
+
+Day 14: Automated Testing & Architecture Documentation (Week 2)
+- Create unit tests for encryption, password hashing, and JWT tokens (test_security.py). [DONE]
+- Create integration tests for auth endpoints, RBAC, and API keys (test_auth_api.py). [DONE]
+- Author Week 2 technical architecture guide in docs/week2_auth_security.md. [DONE]
+
+Day 15-16: Detection Rules & Regex Extension (Week 3)
+- Define SensitiveEntityType enum with 16 entity types (12 regex + 4 NER). [DONE]
+- Implement DetectionRule frozen dataclass with pattern, placeholder, risk_weight. [DONE]
+- Write DETECTION_RULES registry with all 12 compiled regex patterns. [DONE]
+- Add SPACY_ENTITY_RISK_MAP, SPACY_LABEL_TO_ENTITY, PRESIDIO_TO_ENTITY lookup maps. [DONE]
+
+Day 17-18: NLP Sensitivity Classifier (Week 3)
+- Implement _RegexEngine using detection_rules.py (12 entity types). [DONE]
+- Implement _SpacyEngine with en_core_web_md NER (graceful degradation). [DONE]
+- Implement _PresidioEngine with Presidio Analyzer (graceful degradation). [DONE]
+- Implement _ConfidenceFuser with multi-source +0.10 confidence boost. [DONE]
+- Build SensitivityClassifier.classify() with 3-signal fusion and ClassificationResult. [DONE]
+
+Day 19: FirewallEvaluator Integration (Week 3)
+- Insert Stage 1.5 (NLP Classifier) into FirewallEvaluator.evaluate() pipeline. [DONE]
+- Add classifier_result field to EvaluationResult dataclass. [DONE]
+- Update src/engine/__init__.py to export new classifier classes. [DONE]
+
+Day 20: Test Suite (Week 3)
+- Write 59-test suite in tests/test_classifier.py covering all 12 entity types. [DONE]
+- Include spaCy NER tests (5), Presidio tests (4), confidence scoring (4). [DONE]
+- Include mixed/compound input tests (4), result structure (3), perf benchmarks (3). [DONE]
+- Include FirewallEvaluator Stage 1.5 integration tests (4). [DONE]
+
+Day 21: Documentation & Dependencies (Week 3)
+- Install spacy>=3.7, presidio-analyzer>=2.2, presidio-anonymizer>=2.2, phonenumbers. [DONE]
+- Download en_core_web_md model (33.5 MB). [DONE]
+- Author Week 3 architecture guide in docs/week3_classifier.md. [DONE]
+
+Day 22-23: Policy Engine Core & RBAC Model (Week 4)
+- Create SecurityPolicy domain model in src/models/policy.py. [DONE]
+- Create Alembic migration script 003 for security_policies table. [DONE]
+- Implement PolicyEngine in src/engine/policy_engine.py with RBAC matching, risk thresholds, entity blacklisting, and priority ordering. [DONE]
+- Export PolicyEngine classes in src/engine/__init__.py and integrate Stage 4.5 in FirewallEvaluator. [DONE]
+
+Day 24-25: Admin Policies API & CRUD Operations (Week 4)
+- Build Pydantic schemas for SecurityPolicy in src/schemas/policy.py. [DONE]
+- Build policy service module src/services/policy_service.py for policy CRUD and default policy seeding. [DONE]
+- Build admin endpoints /api/v1/admin/policies (list, create, get, update, delete, seed, evaluate) protected by require_admin in src/api/routes/policies.py. [DONE]
+- Register policies router in src/api/router.py. [DONE]
+
+Day 26-27: Default Policies & Database Seed Script (Week 4)
+- Implement default out-of-the-box system policies (Default Admin Policy, Strict Quarantine Policy, Default Agent Exfiltration Policy, Default User PII Policy, Audit All Policy). [DONE]
+- Create executable database seed script in scripts/seed_policies.py. [DONE]
+
+Day 28: Test Suite & Documentation (Week 4)
+- Write 23-scenario test suite in tests/test_policy_engine.py covering unit evaluation, database CRUD, admin API authorization, and FirewallEvaluator integration. [DONE]
+- Author Week 4 Policy Engine & RBAC guide in docs/week4_policy_engine.md. [DONE]
+
+Day 29-30: DataRedactor Core & Strategy Map (Week 5)
+- Implement DataRedactor in src/engine/redactor.py with RedactionStrategy enum (FULL, PARTIAL, HASH, TOKENIZE). [DONE]
+- Implement RedactionEntry, RedactionMap (reversible tokenization), and RedactionResult dataclasses. [DONE]
+- Build ENTITY_STRATEGY_MAP assigning per-entity-type default masking strategy. [DONE]
+- Implement type-aware PARTIAL maskers for EMAIL, PHONE, CREDIT_CARD, IP, SSN, IBAN, PERSON, DATE. [DONE]
+
+Day 31: FirewallEvaluator Integration (Week 5)
+- Add Stage 5.5 DataRedactor to src/engine/evaluator.py pipeline. [DONE]
+- Add redaction_result: Optional[RedactionResult] field to EvaluationResult. [DONE]
+- Export DataRedactor classes from src/engine/__init__.py. [DONE]
+
+Day 32: Test Suite & Documentation (Week 5)
+- Write 37-scenario test suite in tests/test_redactor.py covering all strategies, strategy map, multi-entity spans, RedactionMap operations, FirewallEvaluator integration, and performance benchmarks. [DONE]
+- Author Week 5 Data Redaction Engine guide in docs/week5_redactor.md. [DONE]
+
+
