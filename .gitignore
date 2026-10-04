@@ -47,8 +47,14 @@ logs/
 htmlcov/
 coverage.xml
 
-# ─── Alembic ──────────────────────────────────────────────────
-# Keep migrations/ tracked, but ignore generated __pycache__
-migrations/__pycache__/
+# ─── Node & Frontend ──────────────────────────────────────────
+node_modules/
+*/node_modules/
+dist/
+*/dist/
+
+# ─── Temp / Scratch ───────────────────────────────────────────
+rough.text
+scratch/
 
 

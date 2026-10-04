@@ -10,6 +10,7 @@ from src.api.routes.audit import router as audit_router
 from src.api.routes.auth import router as auth_router
 from src.api.routes.firewall import router as firewall_router
 from src.api.routes.memory import router as memory_router
+from src.api.routes.message import router as message_router
 from src.api.routes.policies import router as policies_router
 from src.api.routes.rules import router as rules_router
 
@@ -22,5 +23,6 @@ api_v1_router.include_router(memory_router)
 api_v1_router.include_router(rules_router)
 api_v1_router.include_router(audit_router)
 api_v1_router.include_router(policies_router)
+api_v1_router.include_router(message_router)
 
 

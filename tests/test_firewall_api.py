@@ -16,8 +16,9 @@ from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from config.database import Base, get_sync_db
+from src.api.deps import require_user
 from src.app import create_app
-from src.models import AgentSession, Tenant
+from src.models import AgentSession, Tenant, User, UserRole
 
 # ─── Stable UUIDs used across all tests ──────────────────────────────────────
 
@@ -96,6 +97,15 @@ def client(test_engine, override_session_factory, seeded_db):
             db.close()
 
     app.dependency_overrides[get_sync_db] = _get_test_db
+    mock_user = User(
+        id=uuid.uuid4(),
+        email="test_admin@corp.com",
+        hashed_password="mock",
+        role=UserRole.ADMIN.value,
+        tenant_id=uuid.UUID(TENANT_ID),
+        is_active=True,
+    )
+    app.dependency_overrides[require_user] = lambda: mock_user
 
     with TestClient(app) as c:
         yield c

@@ -6,6 +6,8 @@ Orchestrates the full firewall pipeline:
   2. Delegate to FirewallEvaluator for multi-stage inspection.
   3. Persist a sanitized MemoryRecord (quarantining if needed).
   4. Write an immutable SecurityAuditEvent to the audit log.
+  5. Append a chain entry to the global SHA-256 hash chain (Week 6).
+     High-risk events (risk_score >= 0.8) also auto-raise a SecurityAlert.
 """
 
 from __future__ import annotations
@@ -17,13 +19,15 @@ from uuid import UUID
 
 from sqlalchemy.orm import Session
 
+from src.engine.audit_logger import AuditLogger  # Week 6
 from src.engine.evaluator import EvaluationResult, FirewallEvaluator
 from src.models.agent import AgentSession, Tenant
-from src.models.audit import SecurityAuditEvent, ViolationStatus
+from src.models.audit import AuditEventType, SecurityAuditEvent, ViolationStatus  # Week 6
 from src.models.memory import MemoryRecord, MemoryType, SensitivityLevel
 from src.models.policy import FirewallRule, RuleAction
 
 _evaluator = FirewallEvaluator()
+_audit_logger = AuditLogger()  # Week 6: Global hash-chain logger
 
 
 def _sha256(text: str) -> str:
@@ -200,6 +204,45 @@ def store_memory(
         client_ip=client_ip,
     )
     db.add(audit)
+    db.flush()  # Get audit.id before chain entry
+
+    # ── Week 6: Append to global hash chain ──────────────────────────────────
+    # Determine severity for chain entry based on risk score
+    if result.risk_score >= 0.90:
+        chain_severity = "CRITICAL"
+    elif result.risk_score >= 0.80:
+        chain_severity = "HIGH"
+    elif result.risk_score >= 0.50:
+        chain_severity = "MEDIUM"
+    elif result.risk_score > 0.0:
+        chain_severity = "LOW"
+    else:
+        chain_severity = "INFO"
+
+    chain_payload: Dict[str, Any] = {
+        "decision": result.decision,
+        "risk_score": result.risk_score,
+        "violation_count": len(result.violations),
+        "latency_ms": result.latency_ms,
+        "detected_entities": detected_entities,
+        "session_id": str(session_id),
+    }
+    if client_ip:
+        chain_payload["client_ip"] = client_ip
+
+    _audit_logger.log_event(
+        db=db,
+        action="memory.store",
+        event_type=AuditEventType.FIREWALL_EVAL.value,
+        severity=chain_severity,
+        tenant_id=str(tenant_id),
+        actor=client_ip or "unknown",
+        resource=str(session_id),
+        payload=chain_payload,
+        event_id=str(audit.id),
+        raise_alert_if_high_risk=True,  # auto-alert when risk_score >= 0.8
+    )
+
     db.commit()
     db.refresh(memory)
 

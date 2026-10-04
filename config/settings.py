@@ -40,6 +40,10 @@ class Settings(BaseSettings):
         alias="ENCRYPTION_KEY",
     )
     openai_api_key: Optional[str] = Field(default=None, alias="OPENAI_API_KEY")
+    gemini_api_key: Optional[str] = Field(default=None, alias="GEMINI_API_KEY")
+    llm_provider: str = Field(default="auto", alias="LLM_PROVIDER")
+    llm_model: Optional[str] = Field(default=None, alias="LLM_MODEL")
+    llm_base_url: Optional[str] = Field(default=None, alias="LLM_BASE_URL")
 
     # ─── Server Settings ─────────────────────────────────────────
     api_host: str = Field(default="0.0.0.0", alias="API_HOST")

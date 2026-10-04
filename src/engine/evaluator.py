@@ -39,6 +39,7 @@ DECISION_REDACT     = "REDACT"
 DECISION_BLOCK      = "BLOCK"
 DECISION_QUARANTINE = "QUARANTINE"
 DECISION_AUDIT      = "AUDIT"
+DECISION_ASK_USER   = "ASK_USER"
 
 # Risk score threshold above which QUARANTINE is forced regardless of rule action
 QUARANTINE_RISK_THRESHOLD = 0.90
@@ -270,12 +271,13 @@ class FirewallEvaluator:
         # ── Stage 5: Final decision ───────────────────────────────────────
         decision = self._determine_decision(violations, risk_score)
 
-        # If policy_result decision has higher severity, enforce it
-        if policy_result and policy_result.decision:
+        # If policy_result decision has higher severity and policy violations occurred, enforce it
+        if policy_result and policy_result.violations and policy_result.decision:
             pol_action = policy_result.decision
             action_priority = {
-                DECISION_QUARANTINE: 5,
-                DECISION_BLOCK: 4,
+                DECISION_QUARANTINE: 6,
+                DECISION_BLOCK: 5,
+                DECISION_ASK_USER: 4,
                 DECISION_REDACT: 3,
                 DECISION_AUDIT: 2,
                 DECISION_ALLOW: 1,
@@ -391,8 +393,9 @@ class FirewallEvaluator:
 
         # Pick the most severe action from rule violations
         action_priority = {
-            DECISION_QUARANTINE: 5,
-            DECISION_BLOCK: 4,
+            DECISION_QUARANTINE: 6,
+            DECISION_BLOCK: 5,
+            DECISION_ASK_USER: 4,
             DECISION_REDACT: 3,
             DECISION_AUDIT: 2,
             DECISION_ALLOW: 1,

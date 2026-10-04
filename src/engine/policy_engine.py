@@ -87,8 +87,9 @@ class PolicyEngine:
 
     # Action precedence hierarchy
     ACTION_PRIORITY = {
-        "QUARANTINE": 5,
-        "BLOCK": 4,
+        "QUARANTINE": 6,
+        "BLOCK": 5,
+        "ASK_USER": 4,
         "REDACT": 3,
         "AUDIT": 2,
         "ALLOW": 1,

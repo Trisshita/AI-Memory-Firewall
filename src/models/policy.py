@@ -27,6 +27,7 @@ class RuleAction(str, Enum):
     BLOCK = "BLOCK"
     QUARANTINE = "QUARANTINE"
     AUDIT = "AUDIT"
+    ASK_USER = "ASK_USER"
 
 
 class RuleType(str, Enum):

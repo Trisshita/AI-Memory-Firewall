@@ -68,9 +68,20 @@ def create_app() -> FastAPI:
 
     # ── Top-level Auth Router & API v1 Router ──────────────────────────────
     from src.api.routes.auth import router as auth_router  # imported here to avoid circular imports
+    from src.api.routes.message import router as message_router
     from src.api.router import api_v1_router
 
     app.include_router(auth_router, prefix="/auth")
     app.include_router(api_v1_router)
+    app.include_router(message_router, prefix="/api")
+
+    # ── Static React Dashboard Serving ─────────────────────────────────────
+    import os
+    if not os.environ.get("PYTEST_CURRENT_TEST"):
+        from fastapi.staticfiles import StaticFiles
+
+        frontend_dist = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend", "dist")
+        if os.path.isdir(frontend_dist):
+            app.mount("/", StaticFiles(directory=frontend_dist, html=True), name="frontend")
 
     return app

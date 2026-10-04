@@ -57,9 +57,11 @@ class MemoryRecordResponse(BaseModel):
     sensitivity_tier: str
     sanitized_content: str = Field(..., description="The cleaned, redacted version of the stored memory")
     is_quarantined: bool
-    quarantine_reason: Optional[str]
+    quarantine_reason: Optional[str] = None
     content_hash: str
-    vector_id: Optional[str]
+    vector_id: Optional[str] = None
+    raw_content: Optional[str] = None
+    metadata_json: Optional[Dict[str, Any]] = None
     created_at: datetime
 
     model_config = {"from_attributes": True}
@@ -69,5 +71,12 @@ class MemoryListResponse(BaseModel):
     """Paginated list of memory records for a session."""
 
     session_id: UUID
+    total: int
+    memories: List[MemoryRecordResponse]
+
+
+class GlobalMemoryListResponse(BaseModel):
+    """Paginated list of memory records across sessions."""
+
     total: int
     memories: List[MemoryRecordResponse]

@@ -12,11 +12,73 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy.orm import Session
 
 from config.database import get_sync_db
-from src.schemas.memory import MemoryListResponse, MemoryRecordResponse, StoreMemoryRequest
+from src.schemas.memory import (
+    GlobalMemoryListResponse,
+    MemoryListResponse,
+    MemoryRecordResponse,
+    StoreMemoryRequest,
+)
 from src.schemas.firewall import DetectedViolation, InspectResponse
 from src.services import firewall_service
 
 router = APIRouter(prefix="/memory", tags=["Memory"])
+
+
+@router.get(
+    "",
+    response_model=GlobalMemoryListResponse,
+    summary="List All Memory Records",
+    description="Query memory records with optional filters for session_id, sensitivity_tier, is_quarantined, and text search.",
+)
+def list_all_memories(
+    session_id: Optional[UUID] = Query(default=None, description="Filter by session ID."),
+    sensitivity_tier: Optional[str] = Query(default=None, description="Filter by sensitivity tier."),
+    is_quarantined: Optional[bool] = Query(default=None, description="Filter by quarantine status."),
+    search: Optional[str] = Query(default=None, description="Search keyword in sanitized content or metadata."),
+    limit: int = Query(default=50, ge=1, le=500),
+    offset: int = Query(default=0, ge=0),
+    db: Session = Depends(get_sync_db),
+) -> GlobalMemoryListResponse:
+    from src.models.memory import MemoryRecord
+
+    query = db.query(MemoryRecord)
+    if session_id:
+        query = query.filter(MemoryRecord.session_id == session_id)
+    if sensitivity_tier:
+        query = query.filter(MemoryRecord.sensitivity_tier == sensitivity_tier)
+    if is_quarantined is not None:
+        query = query.filter(MemoryRecord.is_quarantined == is_quarantined)
+    if search:
+        query = query.filter(MemoryRecord.sanitized_content.ilike(f"%{search}%"))
+
+    total = query.count()
+    records = (
+        query.order_by(MemoryRecord.created_at.desc())
+        .offset(offset)
+        .limit(limit)
+        .all()
+    )
+
+    return GlobalMemoryListResponse(
+        total=total,
+        memories=[
+            MemoryRecordResponse(
+                id=m.id,
+                session_id=m.session_id,
+                memory_type=m.memory_type.value if hasattr(m.memory_type, "value") else m.memory_type,
+                sensitivity_tier=m.sensitivity_tier.value if hasattr(m.sensitivity_tier, "value") else m.sensitivity_tier,
+                sanitized_content=m.sanitized_content,
+                is_quarantined=m.is_quarantined,
+                quarantine_reason=m.quarantine_reason,
+                content_hash=m.content_hash,
+                vector_id=m.vector_id,
+                raw_content=m.raw_content,
+                metadata_json=m.metadata_json,
+                created_at=m.created_at,
+            )
+            for m in records
+        ],
+    )
 
 
 @router.post(

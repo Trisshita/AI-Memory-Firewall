@@ -18,13 +18,22 @@ class Base(DeclarativeBase):
 
 
 # ─── Synchronous Engine & Session (Alembic, Migrations, Sync scripts) ───────────
-sync_engine = create_engine(
-    settings.sync_database_url,
-    echo=settings.db_echo,
-    pool_pre_ping=True,
-    pool_size=10,
-    max_overflow=20,
-)
+is_sqlite = settings.sync_database_url.startswith("sqlite")
+
+if is_sqlite:
+    sync_engine = create_engine(
+        settings.sync_database_url,
+        echo=settings.db_echo,
+        connect_args={"check_same_thread": False},
+    )
+else:
+    sync_engine = create_engine(
+        settings.sync_database_url,
+        echo=settings.db_echo,
+        pool_pre_ping=True,
+        pool_size=10,
+        max_overflow=20,
+    )
 
 SyncSessionLocal = sessionmaker(
     bind=sync_engine,

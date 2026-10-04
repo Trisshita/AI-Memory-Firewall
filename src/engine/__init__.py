@@ -3,9 +3,15 @@ AI Memory Firewall - Security Evaluation Engine
 ================================================
 Exports the core evaluation engine, PII detector, injection detector,
 the Week 3 NLP Sensitivity Classifier, the Week 4 Policy Engine,
-and the Week 5 Data Redaction Engine.
+the Week 5 Data Redaction Engine, and the Week 6 Audit Logger.
 """
 
+from src.engine.audit_logger import (  # Week 6
+    AuditLogger,
+    ChainVerificationResult,
+    compute_entry_hash,
+    GENESIS_HASH,
+)
 from src.engine.classifier import ClassificationResult, EntityDetection, SensitivityClassifier
 from src.engine.evaluator import EvaluationResult, FirewallEvaluator
 from src.engine.injection import InjectionDetector, InjectionMatch
@@ -52,5 +58,9 @@ __all__ = [
     "RedactionMap",
     "RedactionResult",
     "ENTITY_STRATEGY_MAP",
+    # Audit Logger / Hash Chain (Week 6)
+    "AuditLogger",
+    "ChainVerificationResult",
+    "compute_entry_hash",
+    "GENESIS_HASH",
 ]
-
