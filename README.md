@@ -17,7 +17,6 @@ AI memory Firewall/
 ├── tests/                # Automated pytest suite (238 unit & integration tests)
 ├── migrations/           # Alembic database migrations & versions
 ├── config/               # Pydantic settings & database engines
-├── docs/                 # Architectural documentation & weekly milestone summaries
 ├── scripts/              # Utility & maintenance scripts
 ├── alembic.ini           # Alembic migration configuration
 ├── main.py               # Application entry point
