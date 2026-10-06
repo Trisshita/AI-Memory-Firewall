@@ -5,7 +5,7 @@ SQLAlchemy 2.0 engine, declarative base, and session generators.
 """
 
 from typing import AsyncGenerator, Generator
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
@@ -24,8 +24,19 @@ if is_sqlite:
     sync_engine = create_engine(
         settings.sync_database_url,
         echo=settings.db_echo,
-        connect_args={"check_same_thread": False},
+        connect_args={
+            "check_same_thread": False,
+            "timeout": 30,
+        },
     )
+
+    @event.listens_for(sync_engine, "connect")
+    def set_sqlite_pragma(dbapi_connection, connection_record):
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA journal_mode=WAL")
+        cursor.execute("PRAGMA synchronous=NORMAL")
+        cursor.execute("PRAGMA busy_timeout=30000")
+        cursor.close()
 else:
     sync_engine = create_engine(
         settings.sync_database_url,

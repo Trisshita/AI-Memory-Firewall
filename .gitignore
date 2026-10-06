@@ -37,6 +37,8 @@ Thumbs.db
 # ─── Database ─────────────────────────────────────────────────
 *.sqlite3
 *.db
+*.db-shm
+*.db-wal
 
 # ─── Logs ─────────────────────────────────────────────────────
 *.log
@@ -52,6 +54,9 @@ node_modules/
 */node_modules/
 dist/
 */dist/
+
+# ─── Streamlit ────────────────────────────────────────────────
+.streamlit/credentials.toml
 
 # ─── Temp / Scratch ───────────────────────────────────────────
 rough.text

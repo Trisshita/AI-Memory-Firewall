@@ -5,9 +5,8 @@ default security policies, custom firewall rules, and genesis audit block.
 """
 
 import uuid
-from sqlalchemy import create_engine
 from config.settings import settings
-from config.database import Base, SyncSessionLocal
+from config.database import Base, SyncSessionLocal, sync_engine
 from src.models import (
     AgentSession,
     FirewallRule,
@@ -23,8 +22,7 @@ from src.services.policy_service import seed_default_policies
 
 def seed():
     # Ensure tables exist
-    engine = create_engine(settings.sync_database_url, connect_args={"check_same_thread": False})
-    Base.metadata.create_all(bind=engine)
+    Base.metadata.create_all(bind=sync_engine)
 
     db = SyncSessionLocal()
     try:

@@ -256,14 +256,14 @@ DETECTION_RULES: List[DetectionRule] = [
 
 #: Risk weight by spaCy NER entity label
 SPACY_ENTITY_RISK_MAP: dict[str, float] = {
-    "PERSON":   0.60,
-    "ORG":      0.40,
-    "GPE":      0.35,
-    "LOC":      0.30,
-    "DATE":     0.25,
-    "TIME":     0.20,
-    "MONEY":    0.50,
-    "CARDINAL": 0.15,
+    "PERSON":   0.35,
+    "ORG":      0.30,
+    "GPE":      0.25,
+    "LOC":      0.20,
+    "DATE":     0.20,
+    "TIME":     0.15,
+    "MONEY":    0.25,
+    "CARDINAL": 0.10,
     "NORP":     0.20,
     "FAC":      0.20,
     "PRODUCT":  0.15,
@@ -302,16 +302,6 @@ PRESIDIO_TO_ENTITY: dict[str, str] = {
 }
 
 #: Maximum risk_weight for Presidio entity types.
-#
-# Presidio's r.score is its *model confidence* (how sure it is about the
-# detection), not the *sensitivity severity* of the entity type.  Using r.score
-# directly as risk_weight causes low-sensitivity entities (e.g. LOCATION,
-# DATE_TIME) to reach 0.85 and falsely QUARANTINE benign text.
-#
-# This cap is applied in _PresidioEngine.scan(): the final risk_weight is
-#   min(r.score, PRESIDIO_ENTITY_RISK_MAP.get(entity_type, r.score))
-# so high-severity entities (SSN, CREDIT_CARD) are still scored at full
-# Presidio confidence while low-severity NLP entities are bounded.
 PRESIDIO_ENTITY_RISK_MAP: dict[str, float] = {
     # Structured PII — keep Presidio confidence as-is (high risk)
     "US_SSN":            0.90,
@@ -324,9 +314,9 @@ PRESIDIO_ENTITY_RISK_MAP: dict[str, float] = {
     "US_DRIVER_LICENSE": 0.80,
     "AWS_ACCESS_KEY":    0.98,
     # NLP-derived entities — cap at the same weights used by spaCy
-    "PERSON":            0.60,
-    "LOCATION":          0.35,
-    "DATE_TIME":         0.25,
-    "NRP":               0.40,
-    "ORGANIZATION":      0.40,
+    "PERSON":            0.35,
+    "LOCATION":          0.25,
+    "DATE_TIME":         0.20,
+    "NRP":               0.30,
+    "ORGANIZATION":      0.30,
 }
