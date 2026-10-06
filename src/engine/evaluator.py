@@ -177,10 +177,16 @@ class FirewallEvaluator:
 
         # ── Stage 1.5: NLP Sensitivity Classifier ──────────────────────
         classifier_result = self._classifier.classify(sanitized)
+        # High-sensitivity structured PII entity types that warrant security violations
+        CRITICAL_PII_TYPES = {
+            "SSN", "CREDIT_CARD", "EMAIL", "PHONE_NUMBER", "IP_ADDRESS",
+            "API_KEY", "AWS_KEY", "PRIVATE_KEY", "PASSPORT_NUMBER",
+            "DRIVERS_LICENSE", "IBAN", "PROMPT_INJECTION"
+        }
         for entity in classifier_result.entities:
-            # Low-confidence generic NLP tags (LOCATION, DATE, CARDINAL, generic ORG)
-            # with risk_weight < 0.50 are benign contextual signals, not security violations.
-            if entity.risk_weight >= 0.50:
+            # Generic NLP tags (PERSON, LOCATION, DATE, MONEY, ORG) are context signals.
+            # Only structured PII or high-risk matches (risk_weight >= 0.70) generate security violations.
+            if entity.entity_type in CRITICAL_PII_TYPES or entity.risk_weight >= 0.70:
                 violations.append(
                     RuleViolation(
                         rule_id=None,

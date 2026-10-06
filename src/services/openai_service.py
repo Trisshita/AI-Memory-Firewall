@@ -80,12 +80,13 @@ class OpenAIService:
         if is_gemini:
             self.base_url = base_url or settings.llm_base_url or self.GEMINI_API_URL
             self.default_model = settings.llm_model or (
-                "gemini-2.0-flash" if default_model == "gpt-4o-mini" else default_model
+                "gemini-3.8-flash" if default_model == "gpt-4o-mini" else default_model
             )
         else:
             self.base_url = base_url or settings.llm_base_url or self.DEFAULT_API_URL
             self.default_model = settings.llm_model or default_model
 
+        self.is_gemini = is_gemini
         self.timeout_seconds = timeout_seconds
         self.max_retries = max_retries
         self.backoff_factor = backoff_factor
@@ -157,6 +158,8 @@ class OpenAIService:
         Synchronous chat completion call with exponential retry logic.
         """
         selected_model = model or self.default_model
+        if self.is_gemini and (not model or model.startswith("gpt-")):
+            selected_model = self.default_model
         start_time = time.perf_counter()
 
         if mock_response is not None or self.is_mock_mode():
@@ -210,15 +213,34 @@ class OpenAIService:
                 if response.status_code in self.RETRYABLE_STATUS_CODES and attempt < self.max_retries:
                     sleep_time = self.backoff_factor * (2 ** (attempt - 1))
                     logger.warning(
-                        "OpenAI returned status %d on attempt %d/%d; retrying in %.2fs",
+                        "LLM API returned status %d on attempt %d/%d; retrying in %.2fs",
                         response.status_code, attempt, self.max_retries, sleep_time
                     )
                     time.sleep(sleep_time)
                     continue
 
-                logger.error("OpenAI API error %d: %s", response.status_code, response.text)
+                # Graceful fallback on auth or rate limit / quota errors (429) so the app never crashes
+                if response.status_code in (400, 401, 403, 429):
+                    provider_name = "Gemini" if self.is_gemini else "OpenAI"
+                    logger.warning(
+                        "%s returned API error %d (Quota/Auth). Falling back to safe simulation.",
+                        provider_name, response.status_code
+                    )
+                    mock = self._generate_mock_completion(
+                        messages=messages,
+                        model=selected_model,
+                        start_time=start_time,
+                        retry_count=attempt - 1,
+                    )
+                    if response.status_code == 429:
+                        mock.content = f"ℹ️ *[Gemini Free-Tier Daily Quota Reached — Active AI Memory Firewall Simulation Mode]*:\n\n{mock.content}"
+                    else:
+                        mock.content = f"⚠️ [{provider_name} API Key Notice: HTTP {response.status_code} — using safe simulation]:\n\n{mock.content}"
+                    return mock
+
+                logger.error("LLM API error %d: %s", response.status_code, response.text)
                 raise OpenAIServiceError(
-                    f"OpenAI API error: {response.text}",
+                    f"LLM API error: {response.text}",
                     status_code=response.status_code,
                     details=response.text,
                 )

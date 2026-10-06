@@ -84,6 +84,10 @@ class MessageRequest(BaseModel):
         default=None,
         description="Optional mock LLM response string to inject for deterministic E2E testing.",
     )
+    interactive_privacy: bool = Field(
+        default=False,
+        description="If True, prompts with sensitive data pause for user confirmation (apply privacy policy vs send as-is).",
+    )
 
 
 class AskUserDetails(BaseModel):

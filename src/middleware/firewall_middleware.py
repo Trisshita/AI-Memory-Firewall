@@ -144,7 +144,22 @@ class FirewallMiddleware:
     ) -> tuple[AgentSession, UUID]:
         """
         Verify or initialize the AgentSession and resolve the associated tenant_id.
+        Ensures session_id is a valid uuid.UUID instance to prevent SQLAlchemy Uuid processor errors.
         """
+        if isinstance(session_id, str):
+            try:
+                session_id = uuid.UUID(session_id)
+            except ValueError:
+                session_id = uuid.uuid4()
+        elif not isinstance(session_id, uuid.UUID):
+            session_id = uuid.uuid4()
+
+        if isinstance(tenant_id, str):
+            try:
+                tenant_id = uuid.UUID(tenant_id)
+            except ValueError:
+                tenant_id = None
+
         session = db.query(AgentSession).filter(AgentSession.id == session_id).first()
 
         if session:
@@ -167,16 +182,29 @@ class FirewallMiddleware:
                 db.add(default_tenant)
                 db.flush()
 
-        new_session = AgentSession(
-            id=session_id,
-            tenant_id=tenant_id,
-            agent_name="AssistantSession",
-            session_token=f"sess_{uuid.uuid4().hex}",
-            status="ACTIVE",
-        )
-        db.add(new_session)
-        db.flush()
-        return new_session, tenant_id
+        try:
+            new_session = AgentSession(
+                id=session_id,
+                tenant_id=tenant_id,
+                agent_name="AssistantSession",
+                session_token=f"sess_{uuid.uuid4().hex}",
+                status="ACTIVE",
+            )
+            db.add(new_session)
+            db.flush()
+            return new_session, tenant_id
+        except Exception:
+            db.rollback()
+            existing_session = db.query(AgentSession).filter(AgentSession.id == session_id).first()
+            if existing_session:
+                return existing_session, existing_session.tenant_id
+            
+            # Fallback to any active session for tenant
+            any_session = db.query(AgentSession).filter(AgentSession.tenant_id == tenant_id).first()
+            if any_session:
+                return any_session, tenant_id
+                
+            raise
 
     def _retrieve_safe_context(
         self,
@@ -222,6 +250,7 @@ class FirewallMiddleware:
         skip_llm: bool = False,
         mock_llm_response: Optional[str] = None,
         user_role: Optional[str] = None,
+        interactive_privacy: bool = False,
     ) -> MessageProcessResult:
         """
         Execute the full end-to-end AI Memory Firewall pipeline on an incoming message.
@@ -260,6 +289,15 @@ class FirewallMiddleware:
                 effective_decision = DECISION_REDACT
             elif session_pref == DecisionChoice.BLOCK:
                 effective_decision = DECISION_BLOCK
+
+        # ─── 1.6 Interactive Privacy Gate ──────────────────────────────────────
+        # When interactive_privacy is requested and sensitive data or policy triggers
+        # were detected, ask the user whether to apply privacy policy or send as-is.
+        # Malicious prompt injection attacks are always blocked/quarantined directly.
+        if interactive_privacy and not session_pref:
+            has_injection = any(v.rule_type == "PROMPT_INJECTION" for v in inbound_result.violations)
+            if not has_injection and (inbound_result.violations or effective_decision in (DECISION_REDACT, DECISION_BLOCK, DECISION_ASK_USER)):
+                effective_decision = DECISION_ASK_USER
 
         # ─── 2. Short-Circuit Gate: BLOCK or QUARANTINE ─────────────────────────
         if effective_decision in (DECISION_BLOCK, DECISION_QUARANTINE):
@@ -345,13 +383,15 @@ class FirewallMiddleware:
 
         # ─── 2.5 Short-Circuit Gate: ASK_USER Confirmation Flow (Week 8) ───────
         if effective_decision == DECISION_ASK_USER:
-            trigger_reason = "Rule or sensitivity policy requires human confirmation."
+            trigger_reason = "Sensitive data detected. Would you like to apply the privacy policy to redact this data, or send it as-is?"
             matched_text: Optional[str] = None
             entity_type: Optional[str] = None
             if inbound_result.violations:
-                trigger_reason = f"Triggered by rule: {inbound_result.violations[0].rule_name}"
-                matched_text = inbound_result.violations[0].matched_text
-                entity_type = inbound_result.violations[0].rule_type
+                matched_types = list(dict.fromkeys(v.rule_type for v in inbound_result.violations))
+                entity_type = ", ".join(matched_types)
+                matched_snippets = [v.matched_text for v in inbound_result.violations if v.matched_text]
+                matched_text = ", ".join(list(dict.fromkeys(matched_snippets))[:3])
+                trigger_reason = f"Sensitive data detected ({entity_type}). Would you like to apply the privacy policy to redact this data, or send it as-is?"
 
             # Create pending decision record
             pending_dec = decision_service.create_pending_decision(

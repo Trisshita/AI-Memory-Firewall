@@ -120,6 +120,7 @@ def process_message(
         skip_llm=payload.skip_llm,
         mock_llm_response=payload.mock_llm_response,
         user_role=user_role,
+        interactive_privacy=payload.interactive_privacy,
     )
 
     return result.to_response()
